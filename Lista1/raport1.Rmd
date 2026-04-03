@@ -265,6 +265,16 @@ tworz_tabele(dane$StreamingMovies, "Rozkład: Streaming filmów")
 tworz_tabele(dane$PaperlessBilling, "Rozkład: E-faktura")
 tworz_tabele(dane$Churn, "Rozkład: Rezygnacja z usług (Churn)")
 tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
+
+zmienne_binarne <- c("SeniorCitizen", "Partner", "Dependents", 
+                     "PhoneService", "PaperlessBilling", "Churn")
+
+tabela_yes_no <- data.frame(
+  Zmienna = zmienne_binarne,
+  `TAK` = sapply(dane[zmienne_binarne], function(x) sum(x == "Yes")),
+  `NIE` = sapply(dane[zmienne_binarne], function(x) sum(x == "No"))
+)
+kable(tabela_yes_no, row.names = FALSE, caption = "Zestawienie zbiorcze")
 ```
 
 \newpage
@@ -282,12 +292,18 @@ tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
 # Analiza opisowa z podziałem na grupy
 
 ## Tabele z podziałem na grupy
+```{r, echo=FALSE, warning=FALSE, cache=TRUE}
+dane_Churn_yes <- dane[which(dane$Churn=="Yes"),]
+#utworzenie tabeli z danymi zawierającymi tylko te wiersze w których do zmiennej Churn przypisana jest kategoria "Yes"
+
+dane_Churn_no <- dane[which(dane$Churn=="No"),] 
+#utworzenie tabeli z danymi zawierającymi tylko te wiersze w których do zmiennej Churn przypisana jest kategoria "No"
+
+```
 
 ```{r tabele_jakosciowe_grupy, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
 zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
-                        "PhoneService", "MultipleLines", "InternetService",
-                        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
-                        "TechSupport", "StreamingTV", "StreamingMovies",
+                        "PhoneService",
                         "Contract", "PaperlessBilling", "PaymentMethod")
 
 for (zmienna in zmienne_jakosciowe) {
@@ -303,6 +319,126 @@ for (zmienna in zmienne_jakosciowe) {
   print(tabela_out)
 }
 ```
+
+```{r, cache=TRUE,  echo=FALSE, message=FALSE, results='asis'}
+attach(dane_Churn_yes)
+nazwy.zmiennych <- c("Partner", "Dependents", "PhoneService", "PaperlessBilling", "Churn")
+
+partner.summary <- table(Partner)
+dependents.summary <- table(Dependents)
+phoneService.summary <- table(PhoneService)
+paperlessBilling.summary <- table(PaperlessBilling)
+churn.summary <- table(Churn)
+
+summary.matrix_yes <- rbind(partner.summary, dependents.summary, phoneService.summary,
+                            paperlessBilling.summary, churn.summary)
+
+row.names(summary.matrix_yes) <- nazwy.zmiennych
+colnames(summary.matrix_yes) <- c("No", "Yes")
+
+kable(summary.matrix_yes, 
+      caption = "Tabela liczebności dla zmiennych (Partner, Dependents, PhoneService, PaperlessBilling, Churn) - Churn = Yes",
+      format = "latex", booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position")) |>
+  row_spec(0, bold = TRUE, color = "white", background = "pink")
+
+detach(dane_Churn_yes) # Zwolnienie danych z pamięci podręczej
+
+attach(dane_Churn_no)
+# uzyskanie bezpośredniego dostępu do danych z tabeli dane_Churn_no
+
+partner.summary <- table(Partner)
+dependents.summary <- table(Dependents)
+phoneService.summary <- table(PhoneService)
+paperlessBilling.summary <- table(PaperlessBilling)
+churn.summary <- table(Churn)
+
+summary.matrix_no <- rbind(partner.summary, dependents.summary, phoneService.summary,
+                           paperlessBilling.summary, churn.summary)
+
+row.names(summary.matrix_no) <- nazwy.zmiennych
+colnames(summary.matrix_no) <- c("No", "Yes")
+
+kable(summary.matrix_no, 
+      caption = "Tabela liczebności dla zmiennych (Partner, Dependents, PhoneService, PaperlessBilling, Churn) - Churn = No",
+      format = "latex", booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position")) |>
+  row_spec(0, bold = TRUE, color = "white", background = "pink")
+
+detach(dane_Churn_no)
+```
+
+Wyświetlone powyżej tabele pokazują, ilu klientów:
+
+*  ma partnera (zmienna `Partner`), a ilu nie ma
+*  ma osoby na utrzymaniu (zmienna `Dependents`), a ilu nie ma
+*  ma serwis telefoniczny (zmienna `PhoneService`), a ilu nie ma
+*  korzystają z płatności elektronicznych (zmienna `PaperlessBilling`), a ilu nie ma
+*  dalej korzystają z usług naszej firmy (zmienna `Churn`), a ilu nie ma
+
+Pierwsza z tabel zawiera informacje o grupie klientów, którzy odeszli (`Churn==Yes`), a druga o grupie klientów, którzy korzystają dalej z usług firmy (`Churn==No`).
+
+```{r, cache=TRUE,  echo=FALSE, message=FALSE, results='asis'}
+attach(dane_Churn_yes)
+
+nazwy.zmiennych <- c("OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies")
+
+OnlineSecurity.summary <- table(OnlineSecurity)
+OnlineBackup.summary <- table(OnlineBackup)
+DeviceProtection.summary <- table(DeviceProtection)
+TechSupport.summary <- table(TechSupport)
+StreamingTV.summary <- table(StreamingTV)
+StreamingMovies.summary <- table(StreamingMovies)
+
+summary.matrix_yes <- rbind(OnlineSecurity.summary, OnlineBackup.summary, DeviceProtection.summary,
+                            TechSupport.summary, StreamingTV.summary, StreamingMovies.summary)
+
+row.names(summary.matrix_yes) <- nazwy.zmiennych
+colnames(summary.matrix_yes) <- c("No", "No internet service", "Yes")
+
+kable(summary.matrix_yes, 
+      caption = "Tabela liczebności usług internetowych - Churn = Yes",
+      format = "latex", booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position")) |>
+  row_spec(0, bold = TRUE, color = "white", background = "pink")
+
+detach(dane_Churn_yes)
+
+
+attach(dane_Churn_no)
+
+OnlineSecurity.summary <- table(OnlineSecurity)
+OnlineBackup.summary <- table(OnlineBackup)
+DeviceProtection.summary <- table(DeviceProtection)
+TechSupport.summary <- table(TechSupport)
+StreamingTV.summary <- table(StreamingTV)
+StreamingMovies.summary <- table(StreamingMovies)
+
+summary.matrix_no <- rbind(OnlineSecurity.summary, OnlineBackup.summary, DeviceProtection.summary,
+                           TechSupport.summary, StreamingTV.summary, StreamingMovies.summary)
+
+row.names(summary.matrix_no) <- nazwy.zmiennych
+colnames(summary.matrix_no) <- c("No", "No internet service", "Yes")
+
+kable(summary.matrix_no, 
+      caption = "Tabela liczebności usług internetowych - Churn = No",
+      format = "latex", booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position")) |>
+  row_spec(0, bold = TRUE, color = "white", background = "pink")
+
+detach(dane_Churn_no)
+```
+
+Wyświetlone powyżej tabele pokazują, ilu klientów, korzystających z usług internetowych:
+
+*  ma włączone zabezpieczenia online (zmienna `OnlineSecurity`), a ilu nie ma
+*  ma włączone tworzenie kopii zapasowych online (zmienna `OnlineBackup`) , a ilu nie ma
+*  ma włączoną ochronę urządzeń (zmienna `DeviceProtection`), a ilu nie ma
+*  ma włączoną pomoc techniczną (zmienna `Techsupport`), a ilu nie ma
+*  ma włączony StreamingTV (zmienna `StreamingTV`), a ilu nie ma
+*  ma włączony StreamingMovies (zmienna `StreamingMovies`), a ilu nie ma
+
+Zliczają one również klientów, którzy nie korzystają z usług internetowych (zapisuje ich w kolumnie `No internet service`).Pierwsza z tabel zawiera informacje o grupie klientów, którzy odeszli (`Churn==Yes`), a druga o grupie klientów, którzy korzystają dalej z usług firmy (`Churn==No`).
 
 \newpage
 
