@@ -191,6 +191,8 @@ b3 <- ggplot(dane, aes(x = TotalCharges)) +
 (h1 + b1) / (h2 + b2) / (h3 + b3) & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ```
 
+\newpage
+
 -   Czas korzystania z usług firmy (staż) wynosi **od 0 do 72 miesięcy**. Opłaty miesięczne klientów mieszczą się w przedziale **od 18.25 do 118.75 USD**, natomiast opłaty całkowite (skumulowane) przyjmują wartości **od 0 USD (dla zupełnie nowych klientów) do maksymalnie 8684.80 USD**.Czy wszystkie zmienne mają rozkład symetryczny? Zdecydowanie **nie**. Analiza histogramów wykazuje, że żadna z analizowanych cech nie posiada **rozkładu symetrycznego** (zbliżonego do normalnego).
 
 ```{r wykresy_rozrzutu_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=10, fig.align='center'}
@@ -263,18 +265,6 @@ tworz_tabele(dane$StreamingMovies, "Rozkład: Streaming filmów")
 tworz_tabele(dane$PaperlessBilling, "Rozkład: E-faktura")
 tworz_tabele(dane$Churn, "Rozkład: Rezygnacja z usług (Churn)")
 tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
-
-zmienne_binarne <- c("SeniorCitizen", "Partner", "Dependents", 
-                     "PhoneService", "PaperlessBilling", "Churn")
-
-tabela_yes_no <- data.frame(
-  Zmienna = zmienne_binarne,
-  `TAK` = sapply(dane[zmienne_binarne], function(x) sum(x == "Yes")),
-  `NIE` = sapply(dane[zmienne_binarne], function(x) sum(x == "No"))
-)
-kable(tabela_yes_no, row.names = FALSE, caption = "Zestawienie zbiorcze")
-
-
 ```
 
 \newpage
@@ -350,7 +340,7 @@ d3 <- ggplot(dane, aes(x = TotalCharges, fill = Churn)) +
 
 ## Wykresy dla zmiennych jakościowych z podziałem na grupy
 
-wykresy dla najciekawszych zmiennych
+Wykresy dla najciekawszych zmiennych
 
 ```{r slupki_grupy_rozszerzone, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8}
 
@@ -386,9 +376,9 @@ c4 <- ggplot(dane, aes(x = PaymentMethod, fill = Churn)) +
 c1 / c2 / c3 / c4 + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 ```
 
-wykresy dla wszystkich zmiennych
+Wykresy dla wszystkich zmiennych
 
-```{r wszystkie_jakosciowe_grupy, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.cap="Wszystkie zmienne jakościowe w podziale na Churn"}
+```{r wszystkie_jakosciowe_grupy, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8}
 
 zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
                         "PhoneService", "MultipleLines", "InternetService",
