@@ -239,6 +239,7 @@ p3 <- ggplot(dane, aes(x = tenure, y = MonthlyCharges)) +
   
 p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ```
+
 - **Staż a Opłata miesięczna:** Jest to najciekawsza obserwacja w tym zestawieniu. Linia trendu jest niemal idealnie pozioma, co świadczy o braku korelacji między tymi dwiema cechami. Oznacza to, że lojalność klienta (długi staż) nie przekłada się automatycznie na wysokość opłacanych przez niego rachunków. Nowi klienci wybierają równie drogie pakiety, co wieloletni subskrybenci. Sugeruje to, że firma nie prowadzi (lub robi to nieskutecznie) działań typu upselling, czyli nie namawia z sukcesem swoich najstarszych klientów do przechodzenia na wyższe, droższe pakiety usług.
 
 ## Zmienne jakościowe
@@ -293,15 +294,14 @@ kable(tabela_yes_no, row.names = FALSE, caption = "Zbiorcze zestawienie zmiennyc
 
 ```
 
-## Zmienne jakościowe 
-```{r wykresy_slupkowe, echo=FALSE, warning=FALSE, message=FALSE,fig.pos='!h',fig.width=7.5, fig.height=10, fig.align='center', fig.cap="Rozkłady najciekawszych zmiennych jakościowych"}
-
+```{r wykresy_slupkowe, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=8.5, fig.align='center', fig.cap="Rozkłady zmiennych jakościowych"}
 
 # 1. Rezygnacja (Churn)
 p1 <- ggplot(dane, aes(x = Churn, fill = Churn)) +
   geom_bar(color = "black") +
   geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.5) +
   scale_fill_manual(values = c("lightpink", "deeppink")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + 
   labs(title = "Rezygnacja z usług (Churn)", x = "Czy klient odszedł?", y = "Liczba klientów") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -311,6 +311,7 @@ p2 <- ggplot(dane, aes(x = Contract, fill = Contract)) +
   geom_bar(color = "black") +
   geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.5) +
   scale_fill_manual(values = c("mistyrose", "pink", "hotpink")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + 
   labs(title = "Rodzaj zawartej umowy", x = "Typ kontraktu", y = "Liczba klientów") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -320,10 +321,10 @@ p3 <- ggplot(dane, aes(x = InternetService, fill = InternetService)) +
   geom_bar(color = "black") +
   geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.5) +
   scale_fill_manual(values = c("palevioletred1", "maroon1", "maroon3")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + 
   labs(title = "Dostarczane usługi internetowe", x = "Technologia", y = "Liczba klientów") +
   theme_minimal() +
   theme(legend.position = "none")
-
 
 p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ```
@@ -337,6 +338,32 @@ p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 \newpage
 
 # Analiza opisowa z podziałem na grupy
+
+```{r rozklady_ilosciowe_grupy, echo=FALSE, warning=FALSE, message=FALSE, fig.height=8, fig.width=6, fig.align='left'}
+# 1. Staż a rezygnacja 
+g1 <- ggplot(dane, aes(x = tenure, fill = Churn)) +
+  geom_density(alpha = 0.6, color = "black") + # alpha = 0.6 daje półprzezroczystość
+  scale_fill_manual(values = c("No" = "lightpink", "Yes" = "deeppink")) +
+  labs(title = "Rozkład stażu w podziale na grupy", x = "Staż (miesiące)", y = "Gęstość") +
+  theme_minimal()
+
+# 2. Opłaty miesięczne a rezygnacja
+g2 <- ggplot(dane, aes(x = MonthlyCharges, fill = Churn)) +
+  geom_density(alpha = 0.6, color = "black") +
+  scale_fill_manual(values = c("No" = "lightpink", "Yes" = "deeppink")) +
+  labs(title = "Rozkład opłat mies. w podziale na grupy", x = "Opłata miesięczna (USD)", y = "Gęstość") +
+  theme_minimal()
+
+# 3. Opłaty całkowite a rezygnacja
+g3 <- ggplot(dane, aes(x = TotalCharges, fill = Churn)) +
+  geom_density(alpha = 0.6, color = "black") +
+  scale_fill_manual(values = c("No" = "lightpink", "Yes" = "deeppink")) +
+  labs(title = "Rozkład opłat całk. w podziale na grupy", x = "Opłata całkowita (USD)", y = "Gęstość") +
+  theme_minimal()
+
+g1 / g2 / g3
+
+```
 
 \newpage
 
