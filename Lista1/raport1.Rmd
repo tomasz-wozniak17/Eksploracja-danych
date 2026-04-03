@@ -95,7 +95,7 @@ colSums(is.na(dane))
 dane$TotalCharges[is.na(dane$TotalCharges)] <- 0
 ```
 
--   **Nietypowe wartości:** nie wiem cos o no phone service
+-   **Nietypowe wartości:** Występowanie kategorii takich jak 'No phone service' lub 'No internet service' dla usług dodatkowych jest logicznie uzasadnione i wynika z faktu braku posiadania przez klienta usługi bazowej (odpowiednio: telefonu lub internetu).
 
 ```{r,results = FALSE, echo=FALSE}
 # sprawdzenie wartosci odstajacych w zmiennych ilosciowych
@@ -148,7 +148,9 @@ kable(statystyki, digits = 2, caption = "Wskaźniki sumaryczne dla zmiennych ilo
 
 -   **Zmienność cech:** Biorąc pod uwagę miary rozproszenia, bezwzględnie największą zmiennością charakteryzuje się opłata całkowita (odchylenie standardowe wynosi aż **`r round(sd(dane$TotalCharges, na.rm=TRUE), 2)`**). Jest to w pełni uzasadnione, ponieważ wartość ta kumuluje się w czasie i jest silnie uzależniona od zróżnicowanego stażu poszczególnych klientów. Z kolei najmniejszą zmiennością cechuje się opłata miesięczna (odchylenie standardowe równe **`r round(sd(dane$MonthlyCharges, na.rm=TRUE), 2)`**).
 
-```{r rozklady_ilosciowe_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=9.5, fig.align='center', fig.cap="Rozkłady zmiennych ilościowych"}
+## Wykresy 
+
+```{r rozklady_ilosciowe_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=9.5, fig.align='center'}
 
 library(patchwork)
 
@@ -202,7 +204,7 @@ b3 <- ggplot(dane, aes(x = TotalCharges)) +
 (h1 + b1) / (h2 + b2) / (h3 + b3) & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ```
 
--   Czas korzystania z usług firmy (staż) wynosi od 0 do 72 miesięcy. Opłaty miesięczne klientów mieszczą się w przedziale od 18.25 do 118.75 USD, natomiast opłaty całkowite (skumulowane) przyjmują wartości od 0 USD (dla zupełnie nowych klientów) do maksymalnie 8684.80 USD.Czy wszystkie zmienne mają rozkład symetryczny? Zdecydowanie nie. Analiza histogramów wykazuje, że żadna z analizowanych cech nie posiada rozkładu symetrycznego (zbliżonego do normalnego).
+-   Czas korzystania z usług firmy (staż) wynosi **od 0 do 72 miesięcy**. Opłaty miesięczne klientów mieszczą się w przedziale **od 18.25 do 118.75 USD**, natomiast opłaty całkowite (skumulowane) przyjmują wartości **od 0 USD (dla zupełnie nowych klientów) do maksymalnie 8684.80 USD**.Czy wszystkie zmienne mają rozkład symetryczny? Zdecydowanie **nie**. Analiza histogramów wykazuje, że żadna z analizowanych cech nie posiada **rozkładu symetrycznego** (zbliżonego do normalnego).
 
 ```{r wykresy_rozrzutu_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=10, fig.align='center', fig.cap="Wykresy rozrzutu dla zmiennych ilościowych"}
 
@@ -236,7 +238,7 @@ p3 <- ggplot(dane, aes(x = tenure, y = MonthlyCharges)) +
 p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ```
 
--   **Staż a Opłata miesięczna:** Jest to najciekawsza obserwacja w tym zestawieniu. Linia trendu jest niemal idealnie pozioma, co świadczy o braku korelacji między tymi dwiema cechami. Oznacza to, że lojalność klienta (długi staż) nie przekłada się automatycznie na wysokość opłacanych przez niego rachunków. Nowi klienci wybierają równie drogie pakiety, co wieloletni subskrybenci. Sugeruje to, że firma nie prowadzi (lub robi to nieskutecznie) działań typu upselling, czyli nie namawia z sukcesem swoich najstarszych klientów do przechodzenia na wyższe, droższe pakiety usług.
+-   **Staż a Opłata miesięczna:** Jest to najciekawsza obserwacja w tym zestawieniu. Linia trendu jest niemal idealnie pozioma, co świadczy o **braku korelacji** między tymi dwiema cechami. Oznacza to, że lojalność klienta (długi staż) nie przekłada się automatycznie na wysokość opłacanych przez niego rachunków. Nowi klienci wybierają równie drogie pakiety, co wieloletni subskrybenci. Sugeruje to, że firma nie prowadzi (lub robi to nieskutecznie) działań typu upselling, czyli nie namawia z sukcesem swoich najstarszych klientów do przechodzenia na wyższe, droższe pakiety usług.
 
 ## Zmienne jakościowe
 
@@ -247,7 +249,6 @@ tworz_tabele <- function(wektor_danych, tytul) {
   liczebnosc <- table(wektor_danych)
   procent <- round(prop.table(liczebnosc) * 100, 2)
   zestawienie <- cbind("Liczebność" = liczebnosc, "Procent [%]" = procent)
-  
   tabela <- kable(zestawienie, caption = tytul, format = "latex", booktabs = TRUE) |>
     kable_styling(latex_options = c("striped", "HOLD_position")) |>
     row_spec(0, bold = TRUE, color = "white", background = "pink") |>
@@ -274,6 +275,7 @@ tworz_tabele(dane$StreamingMovies, "Rozkład: Streaming filmów")
 tworz_tabele(dane$PaperlessBilling, "Rozkład: E-faktura")
 tworz_tabele(dane$Churn, "Rozkład: Rezygnacja z usług (Churn)")
 tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
+
 # dominanta to bedzie wynik pojawiajacy sie najczesciej w tabeli
 
 # tabele zbiorcze 
@@ -292,17 +294,50 @@ kable(tabela_yes_no, row.names = FALSE, caption = "Zbiorcze zestawienie zmiennyc
 
 \newpage
 
--   **Rodzaj umowy (Contract):** Dominantą (najczęściej wybieraną kategorią) są zdecydowanie umowy krótkoterminowe, odnawiane z miesiąca na miesiąc (Month-to-month). Częstość ich występowania jest wyższa niż umów rocznych i dwuletnich razem wziętych. Wskazuje to na fakt, że baza klientów jest bardzo elastyczna, ale jednocześnie niestabilna, ponieważ większość osób unika długoterminowych zobowiązań.
+## Wnioski
+
+-   **Rodzaj umowy (Contract):** Dominantą są zdecydowanie umowy krótkoterminowe, odnawiane z miesiąca na miesiąc (Month-to-month). Częstość ich występowania jest wyższa niż umów rocznych i dwuletnich razem wziętych. Wskazuje to na fakt, że baza klientów jest bardzo elastyczna, ale jednocześnie niestabilna, ponieważ większość osób unika długoterminowych zobowiązań.
 
 -   **Usługi internetowe (InternetService):** W przypadku tej zmiennej częstości rozkładają się nieco bardziej wielotorowo. Najczęściej przyjmowaną kategorią jest nowoczesny internet światłowodowy (Fiber optic), który nieznacznie wyprzedza tradycyjne złącze DSL. Klienci niekorzystający z usług internetowych w ogóle (No) stanowią najmniej liczną kategorię.
 
 -   **Rezygnacja z usług (Churn):** Częstość przyjmowania wariantów dla głównej zmiennej badawczej jest asymetryczna. Kategorią dominującą jest brak rezygnacji (No), co oznacza, że większość klientów pozostaje aktywna. Jednakże kategoria oznaczająca odejście (Yes) występuje na tyle często (dotyczy ponad 25% bazy), że stanowi to istotny i alarmujący problem biznesowy dla firmy, który wymaga pogłębionej analizy przyczynowo-skutkowej w kolejnych krokach badania.
 
+\newpage
+
 # Analiza opisowa z podziałem na grupy
-## Tabele z podziałem na grupy 
+
+## Tabele z podziałem na grupy
+
 tomuś zrobił
-## Wykresy dla zmiennych ilościowych z podziałem na grupy 
-```{r wykresy_slupkowe, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=8.5, fig.align='center', fig.cap="Rozkłady zmiennych jakościowych"}
+```{r tabele_jakosciowe_grupy, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
+zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
+                        "PhoneService", "MultipleLines", "InternetService",
+                        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+                        "TechSupport", "StreamingTV", "StreamingMovies",
+                        "Contract", "PaperlessBilling", "PaymentMethod")
+
+for (zmienna in zmienne_jakosciowe) {
+  
+  tabela <- table(dane[[zmienna]], dane$Churn)
+  tabela_out <- kable(tabela, 
+                      caption = paste("Rozkład zmiennej:", zmienna, "w podziale na Churn"), 
+                      format = "latex", 
+                      booktabs = TRUE) |>
+    kable_styling(latex_options = c("striped", "HOLD_position")) |>
+    add_header_above(c("Kategorie" = 1, "Czy klient odszedł? (Churn)" = 2)) |>
+    row_spec(0, bold = TRUE, color = "white", background = "pink")
+  print(tabela_out)
+}
+```
+
+\newpage
+
+## Wykresy dla zmiennych ilościowych z podziałem na grupy
+
+zrobilam dla wszytstkich cech
+
+```{r wykresy_slupkowe, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.align='center'}
+
 # 1. Staż
 d1 <- ggplot(dane, aes(x = tenure, fill = Churn)) +
   geom_density(alpha = 0.7, color = "black") +
@@ -324,13 +359,15 @@ d3 <- ggplot(dane, aes(x = TotalCharges, fill = Churn)) +
   labs(title = "Opłata całkowita", x = "Kwota (USD)", y = "Gęstość") +
   theme_minimal()
 
-# Magia patchwork: 2 na górze, 1 na dole, jedna wspólna legenda pod spodem!
 (d1 + d2) / d3 + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 ```
 
-## Wykresy dla zmiennych jakościowych z podziałem na grupy 
+\newpage
 
-```{r slupki_grupy_rozszerzone, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7, fig.align='left', fig.cap="Wybrane zmienne jakościowe w podziale na grupy", fig.pos="!h"}
+## Wykresy dla zmiennych jakościowych z podziałem na grupy
+
+wykresy dla najciekawszych zmiennych 
+```{r slupki_grupy_rozszerzone, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.align='left', fig.pos="!h"}
 
 # 1. Rodzaj umowy
 c1 <- ggplot(dane, aes(x = Contract, fill = Churn)) +
@@ -359,12 +396,33 @@ c4 <- ggplot(dane, aes(x = PaymentMethod, fill = Churn)) +
   scale_fill_manual(values = c("No" = "lightpink", "Yes" = "deeppink")) +
   labs(title = "Metoda płatności", x = NULL, y = "Liczba klientów") +
   theme_minimal() +
-  # Obracamy napisy na osi X, bo nazwy płatności są bardzo długie
   theme(axis.text.x = element_text(angle = 15, hjust = 1))
 
-# Sklejamy w siatkę 2x2 i robimy jedną wspólną legendę na dole!
 c1 / c2 / c3 / c4 + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 ```
+
+wykresy dla wszystkich zmiennych 
+```{r wszystkie_jakosciowe_grupy, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.cap="Wszystkie zmienne jakościowe w podziale na Churn"}
+
+zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
+                        "PhoneService", "MultipleLines", "InternetService",
+                        "OnlineSecurity", "OnlineBackup", "DeviceProtection",
+                        "TechSupport", "StreamingTV", "StreamingMovies",
+                        "Contract", "PaperlessBilling", "PaymentMethod")
+
+wykresy <- lapply(zmienne_jakosciowe, function(zmienna) {
+  ggplot(dane, aes(x = .data[[zmienna]], fill = Churn)) +
+    geom_bar(position = "dodge", color = "black") +
+    scale_fill_manual(values = c("No" = "lightpink", "Yes" = "deeppink")) +
+    labs(title = zmienna, x = NULL, y = "Liczba") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 20, hjust = 1, size = 8),
+          plot.title = element_text(size = 10, face = "bold"))
+})
+wrap_plots(wykresy, ncol = 4) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+
+```
+
 
 \newpage
 
