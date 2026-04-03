@@ -1,0 +1,304 @@
+---
+title: "Raport 1"
+author: "Zuzanna Nowak"
+date: "2026-03-20"
+output:
+  pdf_document:
+    toc: true
+    fig_caption: true
+    fig_width: 5
+    fig_height: 4
+    number_sections: true
+  word_document:
+    toc: true
+  html_document:
+    toc: true
+    df_print: paged
+header-includes:
+- \usepackage[OT4]{polski}
+- \usepackage[utf8]{inputenc}
+- \usepackage{graphicx}
+- \usepackage{float}
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+# USTAWIENIA
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(fig.pos = "H", out.extra = "", fig.align = "center")
+```
+
+```{r pakiety, echo = FALSE}
+# BIBLIOTEKI
+library(ggplot2)
+library(dplyr) 
+library(knitr)
+library(xtable)
+library(kableExtra)
+```
+
+# Wprowadzenie
+
+**Opis danych**
+
+Analizowany zbiór danych (`WA_Fn-UseC_-Telco-Customer-Churn.csv`) pochodzi z portalu Kaggle i zawiera informacje o profilach oraz zachowaniach klientów pewnej firmy telekomunikacyjnej. Tego typu zbiory są powszechnie wykorzystywane w analityce do badania zjawiska migracji klientów, czyli tzw. *churn analysis*.
+
+\newpage
+
+# Przygotowanie danych. Podstawowe informacje o danych.
+
+```{r etap pierwszy, results = FALSE, echo=FALSE}
+# podpunkt a 
+dane <- read.csv(file="WA_Fn-UseC_-Telco-Customer-Churn.csv")
+head(dane)
+#dane zostaly wczytane prawidłowo
+```
+
+**Po wczytaniu danych możemy wyciągnąć następujące wnioski:**
+
+```{r,results = FALSE, echo=FALSE}
+# podpunkt b 
+dim(dane)
+# mamy 21 cech(kolumn) i 7043 przypadków(wierszy)
+```
+
+-   **Rozmiar danych:** Pierwotny zbiór danych składa się z **`r nrow(dane)`** **przypadków** (obserwacji reprezentujących poszczególnych klientów) oraz **`r ncol(dane)`** **cech** (zmiennych).
+
+```{r,results = FALSE, echo=FALSE}
+# sprawdzenie jakie są typy poszczególnych cech
+str(dane)
+
+# zamiana seniorcitizen na typ jakosciowy
+dane$SeniorCitizen <- factor(as.character(dane$SeniorCitizen), 
+                             levels = c("0", "1"),
+                             labels = c("No", "Yes"))
+```
+
+-   **Typy danych:** Zmienne zostały w większości poprawnie rozpoznane przez środowisko R. Wyjątkiem była zmienna **SeniorCitizen**, która pierwotnie była zakodowana jako wartości liczbowe (0 i 1). Aby ułatwić jej interpretację i zachować spójność, została przekształcona na typ **factor** z etykietami "No" i "Yes". Po tej zmianie w zbiorze występują cechy jakościowe o typie factor (jest ich łącznie **`r sum(sapply(dane, is.factor))`**) oraz cechy ilościowe o typie numeric lub integer (jest ich **`r sum(sapply(dane, is.numeric))`**).
+
+-   **Przydatność cech:** Zauważono, że pierwsza kolumna (**customerID**) pełni wyłącznie rolę unikalnego identyfikatora klienta. Ponieważ nie niesie ona żadnej wartości analitycznej w kontekście badania rezygnacji z usług, zostaje **usunięta** przed dalszą analizą.
+
+```{r,results = FALSE, echo=FALSE}
+# w pierwszej kolumnie znajdują się identyfikatory klientów, które są zbędne w analizie danych 
+# usunięcie zbędnych danych (pierwsza kolumna)
+dane$customerID <- NULL
+```
+
+-   **Brakujące obserwacje:** W danych zidentyfikowano braki w kolumnie **TotalCharges**. Brakuje łącznie **`r sum(is.na(dane$TotalCharges))`** obserwacji. Zidentyfikowano, że w oryginalnym pliku wartości te były nietypowo zakodowane jako **puste spacje**. Po prawidłowym przekształceniu kolumny na typ numeryczny, puste wartości zastąpiono zerami, co logicznie odzwierciedla fakt, że nowi klienci (których staż w firmie wynosi 0 miesięcy) nie zdążyli jeszcze wygenerować żadnych kosztów całkowitych.
+
+```{r,results = FALSE, echo=FALSE}
+# sprawdzenie czy występują brakujące obserwacje
+colSums(is.na(dane))
+# w kolumnie "TotalCharges" występują brakujące informacje, jest ich 11, są kodowane jako NA
+# zastąpienie NA zerami ponieważ brakująca obserwacja wynika z braku stażu zatem koszt też jest zerowy 
+dane$TotalCharges[is.na(dane$TotalCharges)] <- 0
+```
+
+-   **Nietypowe wartości:** nie wiem cos o no phone service
+
+```{r,results = FALSE, echo=FALSE}
+# sprawdzenie wartosci odstajacych w zmiennych ilosciowych
+summary(dane |>
+          select(tenure, MonthlyCharges, TotalCharges, Contract, Churn))
+        
+
+# ponowne zapoznaie się z danymi 
+#View(dane)
+dim(dane)
+
+```
+
+to mowil skalski
+
+rozwazyc wszystkie zmienne tabelka dla wszystkich dla najciekawszych wykresy tabelki i opisy
+
+\newpage
+
+# Analiza opisowa - wskaźniki sumaryczne i wykresy.
+
+## Zmienne ilościowe
+
+```{r statystyki_ilosciowe, echo=FALSE, results='asis'}
+# ramka danych ze statystykami
+statystyki <- data.frame(
+  Min = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], min),
+  Mediana = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], median),
+  Srednia = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], mean),
+  Max = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], max),
+  Odch.Std = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], sd),
+  IQR = sapply(dane[, c("tenure", "MonthlyCharges", "TotalCharges")], IQR)
+)
+# zamiana nazw cech na polskie
+rownames(statystyki) <- c("Staż", "Opłata miesięczna", "Opłata całkowita")
+
+# utworzenie czytelnej tabeli za pomoca pakietu kableextra
+kable(statystyki, digits = 2, caption = "Wskaźniki sumaryczne dla zmiennych ilościowych", format = "latex", booktabs = TRUE) |>
+  kable_styling(latex_options = c("striped", "HOLD_position")) |>
+  row_spec(0, bold = TRUE, color = "white", background = "pink") |>
+ column_spec(1, bold = TRUE)
+
+```
+
+**Analiza powyższej tabeli pozwala na wyciągnięcie następujących wniosków dotyczących parametrów rozkładu zmiennych ilościowych:**
+
+-   **Zakres możliwych wartości:** Czas korzystania z usług firmy (staż) wynosi od **`r min(dane$tenure, na.rm=TRUE)`** do **`r max(dane$tenure, na.rm=TRUE)`** miesięcy. Opłaty miesięczne klientów wahają się w przedziale od **`r min(dane$MonthlyCharges, na.rm=TRUE)`** do **`r max(dane$MonthlyCharges, na.rm=TRUE)` USD**, natomiast opłaty całkowite wynoszą od **`r min(dane$TotalCharges, na.rm=TRUE)`** do maksymalnie **`r max(dane$TotalCharges, na.rm=TRUE)` USD**.
+
+-   **Miary położenia:** Średni staż klienta w badanej firmie wynosi około **`r round(mean(dane$tenure, na.rm=TRUE), 0)`** miesięcy, a połowa z nich (mediana) korzysta z jej usług przez maksymalnie **`r median(dane$tenure, na.rm=TRUE)`** miesięcy. Średnia opłata miesięczna to z kolei **`r round(mean(dane$MonthlyCharges, na.rm=TRUE), 2)` USD**.
+
+-   **Zmienność cech:** Biorąc pod uwagę miary rozproszenia, bezwzględnie największą zmiennością charakteryzuje się opłata całkowita (odchylenie standardowe wynosi aż **`r round(sd(dane$TotalCharges, na.rm=TRUE), 2)`**). Jest to w pełni uzasadnione, ponieważ wartość ta kumuluje się w czasie i jest silnie uzależniona od zróżnicowanego stażu poszczególnych klientów. Z kolei najmniejszą zmiennością cechuje się opłata miesięczna (odchylenie standardowe równe **`r round(sd(dane$MonthlyCharges, na.rm=TRUE), 2)`**).
+
+```{r rozklady_ilosciowe_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=9.5, fig.align='center', fig.cap="Rozkłady zmiennych ilościowych"}
+
+library(patchwork)
+
+# 1. Staż klienta (tenure)
+h1 <- ggplot(dane, aes(x = tenure)) +
+  geom_histogram(fill = "lightblue", color = "black", bins = 15) +
+  stat_bin(bins = 15, geom = "text", aes(label = ifelse(after_stat(count) > 0, after_stat(count), "")), 
+           angle = 90, hjust = -0.2, vjust = 0.5, size = 3) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+  labs(title = "Histogram: Staż klienta", x = "Staż (miesiące)", y = "Liczba klientów") +
+  theme_minimal()
+
+b1 <- ggplot(dane, aes(x = tenure)) +
+  geom_boxplot(fill = "lightblue", color = "black") +
+  labs(title = "Boxplot: Staż klienta", x = "Staż (miesiące)") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank())
+
+# 2. Opłaty miesięczne (MonthlyCharges)
+h2 <- ggplot(dane, aes(x = MonthlyCharges)) +
+  geom_histogram(fill = "cornflowerblue", color = "black", bins = 15) +
+  stat_bin(bins = 15, geom = "text", aes(label = ifelse(after_stat(count) > 0, after_stat(count), "")), 
+           angle = 90, hjust = -0.2, vjust = 0.5, size = 3) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+  labs(title = "Histogram: Opłaty miesięczne", x = "Opłata (USD)", y = "Liczba klientów") +
+  theme_minimal()
+
+b2 <- ggplot(dane, aes(x = MonthlyCharges)) +
+  geom_boxplot(fill = "cornflowerblue", color = "black") +
+  labs(title = "Boxplot: Opłaty miesięczne", x = "Opłata (USD)") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank())
+
+# ---------------------------------------------------------
+# 3. Opłaty całkowite (TotalCharges)
+# ---------------------------------------------------------
+h3 <- ggplot(dane, aes(x = TotalCharges)) +
+  # Zmieniony kolor na ciemnoniebieski (tak jak na Twoim PDFie)
+  geom_histogram(fill = "darkblue", color = "black", bins = 15) +
+  stat_bin(bins = 15, geom = "text", aes(label = ifelse(after_stat(count) > 0, after_stat(count), "")), 
+           angle = 90, hjust = -0.2, vjust = 0.5, size = 2.5) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
+  labs(title = "Histogram: Opłaty całkowite", x = "Opłata całkowita (USD)", y = "Liczba klientów") +
+  theme_minimal()
+
+b3 <- ggplot(dane, aes(x = TotalCharges)) +
+  geom_boxplot(fill = "darkblue", color = "black") +
+  labs(title = "Boxplot: Opłaty całkowite", x = "Opłata całkowita (USD)") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.title.y = element_blank())
+
+# ---------------------------------------------------------
+# SKLEJANIE WYKRESÓW
+# ---------------------------------------------------------
+(h1 + b1) / (h2 + b2) / (h3 + b3) & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
+```
+
+- Czas korzystania z usług firmy (staż) wynosi od 0 do 72 miesięcy. Opłaty miesięczne klientów mieszczą się w przedziale od 18.25 do 118.75 USD, natomiast opłaty całkowite (skumulowane) przyjmują wartości od 0 USD (dla zupełnie nowych klientów) do maksymalnie 8684.80 USD.Czy wszystkie zmienne mają rozkład symetryczny? Zdecydowanie nie. Analiza histogramów wykazuje, że żadna z analizowanych cech nie posiada rozkładu symetrycznego (zbliżonego do normalnego).
+
+```{r wykresy_rozrzutu_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=10, fig.align='center', fig.cap="Wykresy rozrzutu dla zmiennych ilościowych"}
+
+# Staż vs Opłata całkowita
+p1 <- ggplot(dane, aes(x = tenure, y = TotalCharges)) +
+  geom_point(alpha = 0.3, color = "lightblue") +
+  geom_smooth(method = "lm", color = "darkred", se = FALSE, linewidth = 1) +
+  labs(title = "Staż vs Opłata całkowita", 
+       x = "Staż klienta (miesiące)", 
+       y = "Opłata całkowita (USD)") +
+  theme_minimal()
+
+# Opłata miesięczna vs Opłata całkowita
+p2 <- ggplot(dane, aes(x = MonthlyCharges, y = TotalCharges)) +
+  geom_point(alpha = 0.3, color = "cornflowerblue") +
+  geom_smooth(method = "lm", color = "darkred", se = FALSE, linewidth = 1) +
+  labs(title = "Opłata mies. vs Opłata całk.", 
+       x = "Opłata miesięczna (USD)", 
+       y = "Opłata całkowita (USD)") +
+  theme_minimal()
+
+# Staż vs Opłata miesięczna
+p3 <- ggplot(dane, aes(x = tenure, y = MonthlyCharges)) +
+  geom_point(alpha = 0.3, color = "darkblue") +
+  geom_smooth(method = "lm", color = "darkred", se = FALSE, linewidth = 1) +
+  labs(title = "Staż vs Opłata miesięczna", 
+       x = "Staż klienta (miesiące)", 
+       y = "Opłata miesięczna (USD)") +
+  theme_minimal()
+  
+p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
+```
+- **Staż a Opłata miesięczna:** Jest to najciekawsza obserwacja w tym zestawieniu. Linia trendu jest niemal idealnie pozioma, co świadczy o braku korelacji między tymi dwiema cechami. Oznacza to, że lojalność klienta (długi staż) nie przekłada się automatycznie na wysokość opłacanych przez niego rachunków. Nowi klienci wybierają równie drogie pakiety, co wieloletni subskrybenci. Sugeruje to, że firma nie prowadzi (lub robi to nieskutecznie) działań typu upselling, czyli nie namawia z sukcesem swoich najstarszych klientów do przechodzenia na wyższe, droższe pakiety usług.
+
+## Zmienne jakościowe
+
+```{r wskazniki sumaryczne dla z.jakosciowych , echo=FALSE, results='asis' }
+# musimy wybrac najciekawsze i pokazac je w raporcie + trzeba sprawdzic nazwy 
+
+tworz_tabele <- function(wektor_danych, tytul) {
+  liczebnosc <- table(wektor_danych)
+  procent <- round(prop.table(liczebnosc) * 100, 2)
+  zestawienie <- cbind("Liczebność" = liczebnosc, "Procent [%]" = procent)
+  
+  tabela <- kable(zestawienie, caption = tytul, format = "latex", booktabs = TRUE) |>
+    kable_styling(latex_options = c("striped", "HOLD_position")) |>
+    row_spec(0, bold = TRUE, color = "white", background = "pink") |>
+    column_spec(1, bold = TRUE)
+  
+  print(tabela)
+  cat("\n\n") 
+}
+
+tworz_tabele(dane$Contract, "Rozkład: Rodzaj umowy")
+tworz_tabele(dane$gender, "Rozkład: Płeć klienta")
+tworz_tabele(dane$SeniorCitizen, "Rozkład: Status seniora")
+tworz_tabele(dane$Partner, "Rozkład: Posiadanie partnera")
+tworz_tabele(dane$Dependents, "Rozkład: Osoby na utrzymaniu")
+tworz_tabele(dane$PhoneService, "Rozkład: Usługa telefoniczna")
+tworz_tabele(dane$MultipleLines, "Rozkład: Wiele linii")
+tworz_tabele(dane$InternetService, "Rozkład: Usługa internetowa")
+tworz_tabele(dane$OnlineSecurity, "Rozkład: Bezpieczeństwo online")
+tworz_tabele(dane$OnlineBackup, "Rozkład: Kopia zapasowa online")
+tworz_tabele(dane$DeviceProtection, "Rozkład: Ochrona urządzenia")
+tworz_tabele(dane$TechSupport, "Rozkład: Wsparcie techniczne")
+tworz_tabele(dane$StreamingTV, "Rozkład: Streaming TV")
+tworz_tabele(dane$StreamingMovies, "Rozkład: Streaming filmów")
+tworz_tabele(dane$PaperlessBilling, "Rozkład: E-faktura")
+tworz_tabele(dane$Churn, "Rozkład: Rezygnacja z usług (Churn)")
+tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
+# dominanta to bedzie wynik pojawiajacy sie najczesciej w tabeli
+
+# tabele zbiorcze 
+
+zmienne_binarne <- c("SeniorCitizen", "Partner", "Dependents", 
+                     "PhoneService", "PaperlessBilling", "Churn")
+tabela_yes_no <- data.frame(
+  Zmienna = zmienne_binarne,
+  `TAK` = sapply(dane[zmienne_binarne], function(x) sum(x == "Yes")),
+  `NIE` = sapply(dane[zmienne_binarne], function(x) sum(x == "No"))
+)
+kable(tabela_yes_no, row.names = FALSE, caption = "Zbiorcze zestawienie zmiennych binarnych (Yes/No)")
+
+
+```
+
+\newpage
+
+# Analiza opisowa z podziałem na grupy
+
+summary
+
+\newpage
+
+# Podsumowanie - wnioski z przeprowadzonej analizy
