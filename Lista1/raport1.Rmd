@@ -1,6 +1,6 @@
 ---
 title: "Raport 1"
-author: "Zuzanna Nowak"
+author: "Zuzanna Nowak 287345 i Tomasz Woźniak 287347"
 date: "2026-03-20"
 output:
   pdf_document:
@@ -27,6 +27,7 @@ fontsize: 12pt
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 knitr::opts_chunk$set(fig.pos = "H", out.extra = "", fig.align = "center")
+knitr::opts_chunk$set(dev = "cairo_pdf")
 ```
 
 ```{r pakiety, echo = FALSE}
@@ -36,6 +37,7 @@ library(dplyr)
 library(knitr)
 library(xtable)
 library(kableExtra)
+library(patchwork)
 ```
 
 # Wprowadzenie
@@ -45,11 +47,9 @@ library(kableExtra)
 Analizowany zbiór danych (`WA_Fn-UseC_-Telco-Customer-Churn.csv`) pochodzi z portalu Kaggle i zawiera informacje o profilach oraz zachowaniach klientów pewnej firmy telekomunikacyjnej. Tego typu zbiory są powszechnie wykorzystywane w analityce do badania zjawiska migracji klientów, czyli tzw. *churn analysis*.
 
 \newpage
-
 # Przygotowanie danych. Podstawowe informacje o danych.
 
 ```{r etap pierwszy, results = FALSE, echo=FALSE}
-# podpunkt a 
 dane <- read.csv(file="WA_Fn-UseC_-Telco-Customer-Churn.csv")
 head(dane)
 #dane zostaly wczytane prawidłowo
@@ -58,7 +58,6 @@ head(dane)
 **Po wczytaniu danych możemy wyciągnąć następujące wnioski:**
 
 ```{r,results = FALSE, echo=FALSE}
-# podpunkt b 
 dim(dane)
 # mamy 21 cech(kolumn) i 7043 przypadków(wierszy)
 ```
@@ -101,17 +100,10 @@ dane$TotalCharges[is.na(dane$TotalCharges)] <- 0
 # sprawdzenie wartosci odstajacych w zmiennych ilosciowych
 summary(dane |>
           select(tenure, MonthlyCharges, TotalCharges, Contract, Churn))
-        
-
 # ponowne zapoznaie się z danymi 
 #View(dane)
 dim(dane)
-
 ```
-
-to mowil skalski
-
-rozwazyc wszystkie zmienne tabelka dla wszystkich dla najciekawszych wykresy tabelki i opisy
 
 \newpage
 
@@ -148,12 +140,8 @@ kable(statystyki, digits = 2, caption = "Wskaźniki sumaryczne dla zmiennych ilo
 
 -   **Zmienność cech:** Biorąc pod uwagę miary rozproszenia, bezwzględnie największą zmiennością charakteryzuje się opłata całkowita (odchylenie standardowe wynosi aż **`r round(sd(dane$TotalCharges, na.rm=TRUE), 2)`**). Jest to w pełni uzasadnione, ponieważ wartość ta kumuluje się w czasie i jest silnie uzależniona od zróżnicowanego stażu poszczególnych klientów. Z kolei najmniejszą zmiennością cechuje się opłata miesięczna (odchylenie standardowe równe **`r round(sd(dane$MonthlyCharges, na.rm=TRUE), 2)`**).
 
-## Wykresy 
-
-```{r rozklady_ilosciowe_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=9.5, fig.align='center'}
-
-library(patchwork)
-
+## Wykresy
+```{r rozklady_ilosciowe_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.align='center'}
 # 1. Staż klienta (tenure)
 h1 <- ggplot(dane, aes(x = tenure)) +
   geom_histogram(fill = "lightblue", color = "black", bins = 15) +
@@ -186,7 +174,6 @@ b2 <- ggplot(dane, aes(x = MonthlyCharges)) +
 
 # 3. Opłaty całkowite (TotalCharges)
 h3 <- ggplot(dane, aes(x = TotalCharges)) +
-  # Zmieniony kolor na ciemnoniebieski (tak jak na Twoim PDFie)
   geom_histogram(fill = "darkblue", color = "black", bins = 15) +
   stat_bin(bins = 15, geom = "text", aes(label = ifelse(after_stat(count) > 0, after_stat(count), "")), 
            angle = 90, hjust = -0.2, vjust = 0.5, size = 2.5) +
@@ -206,7 +193,7 @@ b3 <- ggplot(dane, aes(x = TotalCharges)) +
 
 -   Czas korzystania z usług firmy (staż) wynosi **od 0 do 72 miesięcy**. Opłaty miesięczne klientów mieszczą się w przedziale **od 18.25 do 118.75 USD**, natomiast opłaty całkowite (skumulowane) przyjmują wartości **od 0 USD (dla zupełnie nowych klientów) do maksymalnie 8684.80 USD**.Czy wszystkie zmienne mają rozkład symetryczny? Zdecydowanie **nie**. Analiza histogramów wykazuje, że żadna z analizowanych cech nie posiada **rozkładu symetrycznego** (zbliżonego do normalnego).
 
-```{r wykresy_rozrzutu_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=10, fig.align='center', fig.cap="Wykresy rozrzutu dla zmiennych ilościowych"}
+```{r wykresy_rozrzutu_ggplot, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=10, fig.align='center'}
 
 # Staż vs Opłata całkowita
 p1 <- ggplot(dane, aes(x = tenure, y = TotalCharges)) +
@@ -243,7 +230,6 @@ p1 / p2 / p3 & theme(plot.margin = margin(t = 10, r = 25, b = 10, l = 25))
 ## Zmienne jakościowe
 
 ```{r wskazniki sumaryczne dla z.jakosciowych , echo=FALSE, results='asis' }
-# musimy wybrac najciekawsze i pokazac je w raporcie + trzeba sprawdzic nazwy 
 
 tworz_tabele <- function(wektor_danych, tytul) {
   liczebnosc <- table(wektor_danych)
@@ -255,7 +241,9 @@ tworz_tabele <- function(wektor_danych, tytul) {
     column_spec(1, bold = TRUE)
   
   print(tabela)
-  cat("\n\n") 
+  
+  cat("\n\n")
+  
 }
 
 tworz_tabele(dane$Contract, "Rozkład: Rodzaj umowy")
@@ -276,18 +264,15 @@ tworz_tabele(dane$PaperlessBilling, "Rozkład: E-faktura")
 tworz_tabele(dane$Churn, "Rozkład: Rezygnacja z usług (Churn)")
 tworz_tabele(dane$PaymentMethod, "Rozkład: Metoda płatności")
 
-# dominanta to bedzie wynik pojawiajacy sie najczesciej w tabeli
-
-# tabele zbiorcze 
-
 zmienne_binarne <- c("SeniorCitizen", "Partner", "Dependents", 
                      "PhoneService", "PaperlessBilling", "Churn")
+
 tabela_yes_no <- data.frame(
   Zmienna = zmienne_binarne,
   `TAK` = sapply(dane[zmienne_binarne], function(x) sum(x == "Yes")),
   `NIE` = sapply(dane[zmienne_binarne], function(x) sum(x == "No"))
 )
-kable(tabela_yes_no, row.names = FALSE, caption = "Zbiorcze zestawienie zmiennych binarnych (Yes/No)")
+kable(tabela_yes_no, row.names = FALSE, caption = "Zestawienie zbiorcze")
 
 
 ```
@@ -308,7 +293,6 @@ kable(tabela_yes_no, row.names = FALSE, caption = "Zbiorcze zestawienie zmiennyc
 
 ## Tabele z podziałem na grupy
 
-tomuś zrobił
 ```{r tabele_jakosciowe_grupy, echo=FALSE, results='asis', warning=FALSE, message=FALSE}
 zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
                         "PhoneService", "MultipleLines", "InternetService",
@@ -366,8 +350,9 @@ d3 <- ggplot(dane, aes(x = TotalCharges, fill = Churn)) +
 
 ## Wykresy dla zmiennych jakościowych z podziałem na grupy
 
-wykresy dla najciekawszych zmiennych 
-```{r slupki_grupy_rozszerzone, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.align='left', fig.pos="!h"}
+wykresy dla najciekawszych zmiennych
+
+```{r slupki_grupy_rozszerzone, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8}
 
 # 1. Rodzaj umowy
 c1 <- ggplot(dane, aes(x = Contract, fill = Churn)) +
@@ -401,7 +386,8 @@ c4 <- ggplot(dane, aes(x = PaymentMethod, fill = Churn)) +
 c1 / c2 / c3 / c4 + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 ```
 
-wykresy dla wszystkich zmiennych 
+wykresy dla wszystkich zmiennych
+
 ```{r wszystkie_jakosciowe_grupy, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=8, fig.cap="Wszystkie zmienne jakościowe w podziale na Churn"}
 
 zmienne_jakosciowe <- c("gender", "SeniorCitizen", "Partner", "Dependents",
@@ -422,7 +408,6 @@ wykresy <- lapply(zmienne_jakosciowe, function(zmienna) {
 wrap_plots(wykresy, ncol = 4) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 
 ```
-
 
 \newpage
 
